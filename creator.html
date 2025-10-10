@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft 3D Portrait Creator</title>
+    <title>Minecraft Portrait Creator</title>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/skinview3d@3.4.1/bundles/skinview3d.bundle.js"></script>
     <style>
@@ -15,35 +15,61 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(168, 85, 247, 0.2) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(5deg); }
+            66% { transform: translate(-20px, 20px) rotate(-5deg); }
         }
         
         .container {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
             max-width: 900px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 100px rgba(99, 102, 241, 0.2);
+            position: relative;
+            z-index: 1;
         }
         
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #666;
             margin-bottom: 30px;
-            font-size: 14px;
+            font-size: 28px;
         }
         
         .input-section {
@@ -202,8 +228,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎨 Minecraft 3D Portrait Creator</h1>
-        <p class="subtitle">Real 3D rendering with Three.js - Perfect for dialogue boxes</p>
+        <h1>Minecraft Portrait Creator</h1>
         
         <div class="input-section">
             <input type="text" class="username-input" id="usernameInput" placeholder="Enter Minecraft username (e.g., duality13011)">
@@ -272,7 +297,7 @@
             
             <div class="control-group">
                 <label for="cameraHeight">Vertical Position:</label>
-                <input type="range" id="cameraHeight" min="-30" max="30" value="0">
+                <input type="range" id="cameraHeight" min="-100" max="100" value="0">
                 <span id="heightDisplay">0</span>
             </div>
             
@@ -392,8 +417,16 @@
             errorMsg.textContent = '❌ ' + message;
         }
         
+        // Add live update listeners for all controls
+        bgType.addEventListener('change', updatePreview);
+        bgColor.addEventListener('input', updatePreview);
+        bgColor2.addEventListener('input', updatePreview);
+        borderColor.addEventListener('input', updatePreview);
+        outputSize.addEventListener('change', updatePreview);
+        
         borderWidth.addEventListener('input', (e) => {
             borderValue.textContent = e.target.value + 'px';
+            updatePreview();
         });
         
         cameraAngle.addEventListener('input', (e) => {
@@ -401,13 +434,13 @@
             angleDisplay.textContent = angle + '°';
             const radians = (angle * Math.PI) / 180;
             skinViewer.camera.rotation.y = radians;
+            updatePreview();
         });
         
         cameraHeight.addEventListener('input', (e) => {
             const height = parseFloat(e.target.value);
             heightDisplay.textContent = height;
             verticalOffset = height;
-            // Update preview immediately
             updatePreview();
         });
         
@@ -415,6 +448,7 @@
             const zoomValue = parseFloat(e.target.value);
             zoomDisplay.textContent = zoomValue + 'x';
             skinViewer.zoom = zoomValue;
+            updatePreview();
         });
         
         captureBtn.addEventListener('click', capturePortrait);
